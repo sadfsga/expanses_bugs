@@ -38,35 +38,44 @@ class _ExpansesState extends State<Expanses> {
       category: Category.travel,
     ),
   ];
-  
+
   void _addExpanses(Expansesmodel expanses) {
-    setState(() {
-      _registeredExpanses.add(expanses);
-    });
+    _registeredExpanses.add(expanses);
   }
+
   void _removeExpanses(Expansesmodel expanses) {
     setState(() {
       _registeredExpanses.remove((expanses));
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Expanses Tracker'),
         actions: [
-          IconButton(onPressed: () {
-            showModalBottomSheet(context: context, builder: (_)=>
-            NewExpanses(onAddExpanses: _addExpanses)
-            );
-          },
-            icon: Icon(Icons.add))],
+          IconButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (_) => NewExpanses(onAddExpanses: _addExpanses),
+              );
+            },
+            icon: Icon(Icons.add),
+          ),
+        ],
       ),
       body: Center(
         child: Column(
           children: [
             Chart(expenses: _registeredExpanses),
-            Expanded(child: ExpansesList(expanses: _registeredExpanses, onRemoveExpanses: _removeExpanses)),
+            Expanded(
+              child: ExpansesList(
+                expanses: _registeredExpanses,
+                onRemoveExpanses: _removeExpanses,
+              ),
+            ),
           ],
         ),
       ),

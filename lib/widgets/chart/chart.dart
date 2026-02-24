@@ -53,7 +53,7 @@ class Chart extends StatelessWidget {
                   ChartBar(
                     fill: bucket.totalAmount == 0
                         ? 0
-                        : bucket.totalAmount / maxTotalAmount,
+                        :maxTotalAmount / bucket.totalAmount,
                   ),
               ],
             ),

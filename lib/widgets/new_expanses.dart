@@ -1,14 +1,11 @@
-import 'dart:developer';
-
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:expenses_app/Models/expanses.dart';
 
 class NewExpanses extends StatefulWidget {
-  NewExpanses({super.key, required this.onAddExpanses});
+  const NewExpanses({super.key, required this.onAddExpanses});
   final void Function(Expansesmodel) onAddExpanses;
+
   @override
   State<NewExpanses> createState() => _NewExpansesState();
 }
@@ -16,9 +13,11 @@ class NewExpanses extends StatefulWidget {
 class _NewExpansesState extends State<NewExpanses> {
   final _titlecontroller = TextEditingController();
   final _amountcontroller = TextEditingController();
-  final formatter = DateFormat();
+  final formatter = DateFormat.yMd();
+
   Category _selectedCategory = Category.travel;
   DateTime? _selectedDate;
+
   @override
   void dispose() {
     _titlecontroller.dispose();
@@ -35,7 +34,7 @@ class _NewExpansesState extends State<NewExpanses> {
           TextField(
             controller: _titlecontroller,
             maxLength: 50,
-            decoration: InputDecoration(labelText: 'Title'),
+            decoration: const InputDecoration(labelText: 'Title'),
           ),
           Row(
             children: [
@@ -43,7 +42,7 @@ class _NewExpansesState extends State<NewExpanses> {
                 child: TextField(
                   controller: _amountcontroller,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Amount',
                     prefixText: '\$',
                   ),
@@ -56,34 +55,27 @@ class _NewExpansesState extends State<NewExpanses> {
                     Expanded(
                       child: Text(
                         _selectedDate == null
-                            ? 'No Data Selected'
+                            ? 'No Date Selected'
                             : formatter.format(_selectedDate!),
                       ),
                     ),
                     IconButton(
                       onPressed: () async {
                         final now = DateTime.now();
-                        final firstDate = DateTime(
-                          now.year - 1,
-                          now.month,
-                          now.day,
-                        );
-                        // final lastDate = DateTime(
-                        //   now.year + 1,
-                        //   now.month,
-                        //   now.day,
-                        // );
-                        final DateTime? pickdata = await showDatePicker(
+                        final firstDate =
+                            DateTime(now.year - 1, now.month, now.day);
+
+                        final pickdata = await showDatePicker(
                           context: context,
                           initialDate: now,
                           firstDate: firstDate,
                           lastDate: now,
                         );
-                        setState(() {
-                          _selectedDate = pickdata;
-                        });
+
+                        // 🐞 BUG 1: نسينا setState
+                        _selectedDate = pickdata;
                       },
-                      icon: Icon(Icons.calendar_month),
+                      icon: const Icon(Icons.calendar_month),
                     ),
                   ],
                 ),
@@ -93,13 +85,13 @@ class _NewExpansesState extends State<NewExpanses> {
           Row(
             children: [
               DropdownButton(
+                value: _selectedCategory,
                 items: Category.values.map((category) {
                   return DropdownMenuItem(
                     value: category,
                     child: Text(category.name.toUpperCase()),
                   );
                 }).toList(),
-                value: _selectedCategory,
                 onChanged: (newvalue) {
                   setState(() {
                     _selectedCategory = newvalue as Category;
@@ -110,49 +102,43 @@ class _NewExpansesState extends State<NewExpanses> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text('cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
-                  final double? enteredAmount = double.tryParse(
-                    _amountcontroller.text,
-                  );
+                  final double? enteredAmount =
+                      double.tryParse(_amountcontroller.text);
+
+                  // 🐞 BUG 2: شرط معكوس
                   final bool amountisvalid =
-                      enteredAmount == null || enteredAmount <= 0;
+                      enteredAmount != null && enteredAmount > 0;
 
                   if (_titlecontroller.text.trim().isEmpty ||
                       amountisvalid ||
                       _selectedDate == null) {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: Text('Invalid Input'),
-                        content: Text(
-                          'Please enter a valid title, amount and date',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                            },
-                            child: Text('Okay'),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else {
-                    widget.onAddExpanses(
-                      Expansesmodel(
-                        title: _titlecontroller.text,
-                        amount: enteredAmount,
-                        date: _selectedDate!,
-                        category: _selectedCategory,
-                      ),
-                    );
-                    Navigator.pop(context);
+                    return;
                   }
+
+                  widget.onAddExpanses(
+                    Expansesmodel(
+                      title: _titlecontroller.text,
+                      amount: enteredAmount!,
+                      date: _selectedDate!,
+                      category: _selectedCategory,
+                    ),
+                  );
+
+                  // 🐞 BUG 3: بدل ما يقفل بيروح يفتح صفحة تانية
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (ctx) => const Scaffold(
+                        body: Center(child: Text("Wrong Navigation 😅")),
+                      ),
+                    ),
+                  );
                 },
-                child: Text('Save Expanses'),
+                child: const Text('Save Expanses'),
               ),
             ],
           ),
